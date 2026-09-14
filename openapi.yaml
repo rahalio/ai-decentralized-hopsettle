@@ -1,0 +1,389 @@
+openapi: 3.0.3
+info:
+  title: Hopsettle
+  version: 0.1.0
+  description: >-
+    Mesh micropayment channel operations console for seller, buyer, relay, and
+    superpeer operators — channel lifecycle, packet accounting, pricing, and staking.
+  x-product-slug: ai-decentralized-hopsettle
+  x-source: ai-in-decentralized+ai/RightMesh_TWP5/
+servers:
+  - url: https://api.example.com
+tags:
+  - name: Channels
+    description: Payment channel discovery, open, and close
+  - name: Accounting
+    description: BPS/CHS packet-level data accounting
+  - name: Pricing
+    description: Seller rates and superpeer markup policies
+  - name: Staking
+    description: Token superpeer float and eligibility
+  - name: Settlement
+    description: RMESH settlement statements
+  - name: Reporting
+    description: Operator reconciliation exports
+paths:
+  /v1/channels:
+    get:
+      operationId: listPaymentChannels
+      tags: [Channels]
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [buyer, seller, superpeer, relay]
+      responses:
+        "200":
+          description: Channels page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopePaymentChannel"
+    post:
+      operationId: openPaymentChannel
+      tags: [Channels]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChannelOpenRequest"
+      responses:
+        "201":
+          description: Channel open initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopePaymentChannel"
+  /v1/channels/{channelId}:
+    parameters:
+      - $ref: "#/components/parameters/ChannelId"
+    get:
+      operationId: getPaymentChannel
+      tags: [Channels]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Channel state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopePaymentChannel"
+  /v1/channels/{channelId}/close:
+    parameters:
+      - $ref: "#/components/parameters/ChannelId"
+    post:
+      operationId: closePaymentChannel
+      tags: [Channels]
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "202":
+          description: Close accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopePaymentChannel"
+  /v1/accounting/entries:
+    get:
+      operationId: listAccountingEntries
+      tags: [Accounting]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - name: channelId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Packet accounting entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopePacketAccountingEntry"
+    post:
+      operationId: ingestAccountingEntry
+      tags: [Accounting]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PacketAccountingEntry"
+      responses:
+        "201":
+          description: Entry ingested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopePacketAccountingEntry"
+  /v1/pricing/policies:
+    get:
+      operationId: listPricingPolicies
+      tags: [Pricing]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Pricing policies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopePricingPolicy"
+    post:
+      operationId: createPricingPolicy
+      tags: [Pricing]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PricingPolicyCreate"
+      responses:
+        "201":
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopePricingPolicy"
+  /v1/staking/accounts/{meshId}:
+    parameters:
+      - name: meshId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getStakingAccount
+      tags: [Staking]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Staking float and eligibility
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeStakingAccount"
+  /v1/settlement/statements:
+    get:
+      operationId: listSettlementStatements
+      tags: [Settlement]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Settlement statements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeSettlementStatement"
+  /v1/reports/channel-reconciliation:
+    get:
+      operationId: getChannelReconciliationReport
+      tags: [Reporting]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: superpeerId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Channel vs accounting reconciliation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeChannelReconciliationReport"
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    ChannelId:
+      name: channelId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId: { type: string }
+        timestamp: { type: string, format: date-time }
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+    PaymentChannel:
+      type: object
+      required: [id, meshId, role, status]
+      properties:
+        id: { type: string }
+        meshId: { type: string }
+        role: { type: string, enum: [buyer, seller, superpeer, relay] }
+        status: { type: string, enum: [opening, open, closing, closed] }
+        rmeshBalance: { type: number, format: double }
+        ethBalance: { type: number, format: double }
+    ChannelOpenRequest:
+      type: object
+      required: [meshId, role, counterpartyMeshId]
+      properties:
+        meshId: { type: string }
+        role: { type: string }
+        counterpartyMeshId: { type: string }
+        depositRmesh: { type: number, format: double }
+    PacketAccountingEntry:
+      type: object
+      required: [channelId, packetType, bytes, bpsSignature]
+      properties:
+        channelId: { type: string }
+        packetType: { type: string, enum: [DATA, DATA_ACK] }
+        bytes: { type: integer }
+        bpsSignature: { type: string }
+        chsSignature: { type: string }
+    PricingPolicy:
+      type: object
+      properties:
+        id: { type: string }
+        role: { type: string }
+        pricePerMb: { type: number, format: double }
+        superpeerMarkupPercent: { type: number, format: float }
+    PricingPolicyCreate:
+      type: object
+      required: [role, pricePerMb]
+      properties:
+        role: { type: string }
+        pricePerMb: { type: number, format: double }
+        superpeerMarkupPercent: { type: number, format: float }
+    StakingAccount:
+      type: object
+      properties:
+        meshId: { type: string }
+        rmeshFloat: { type: number, format: double }
+        eligibleForNewChannels: { type: boolean }
+        minimumFloat: { type: number, format: double }
+    SettlementStatement:
+      type: object
+      properties:
+        id: { type: string }
+        period: { type: string }
+        netRmesh: { type: number, format: double }
+        channelsClosed: { type: integer }
+    ChannelReconciliationReport:
+      type: object
+      properties:
+        superpeerId: { type: string }
+        accountingMismatchRate: { type: number, format: float }
+        openChannels: { type: integer }
+    DataEnvelopePaymentChannel:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/PaymentChannel" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopePacketAccountingEntry:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/PacketAccountingEntry" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopePricingPolicy:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/PricingPolicy" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopeStakingAccount:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/StakingAccount" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopeChannelReconciliationReport:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/ChannelReconciliationReport" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopePaymentChannel:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/PaymentChannel" } }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopePacketAccountingEntry:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/PacketAccountingEntry" } }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopePricingPolicy:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/PricingPolicy" } }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeSettlementStatement:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/SettlementStatement" } }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
