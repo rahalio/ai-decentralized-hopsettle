@@ -1,0 +1,155 @@
+openapi: 3.1.0
+info:
+  title: Disputes API
+  version: 0.1.0
+  description: |
+    Volume dispute queue with exportable BPS/CHS signature evidence (BR-10).
+  license:
+    name: Proprietary
+    url: https://hopsettle.local/license
+  x-domain: dsp
+servers:
+  - url: https://api.hopsettle.local
+security:
+  - apiKey: []
+tags:
+  - name: Disputes
+    description: Dispute workspace
+paths:
+  /v1/disputes:
+    get:
+      operationId: listDisputes
+      tags: [Disputes]
+      summary: List disputes
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: ./disputes.schemas.yaml#/components/schemas/DisputeStatus
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Disputes
+          content:
+            application/json:
+              schema:
+                $ref: ./disputes.schemas.yaml#/components/schemas/DisputeListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createDispute
+      tags: [Disputes]
+      summary: Open a volume dispute
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./disputes.schemas.yaml#/components/schemas/DisputeCreateRequest
+      responses:
+        '201':
+          description: Dispute created
+          content:
+            application/json:
+              schema:
+                $ref: ./disputes.schemas.yaml#/components/schemas/DisputeResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/disputes/{disputeId}:
+    get:
+      operationId: getDispute
+      tags: [Disputes]
+      summary: Get dispute detail
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            $ref: ./disputes.schemas.yaml#/components/schemas/DisputeId
+      responses:
+        '200':
+          description: Dispute
+          content:
+            application/json:
+              schema:
+                $ref: ./disputes.schemas.yaml#/components/schemas/DisputeResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/disputes/{disputeId}/evidence-export:
+    post:
+      operationId: exportDisputeEvidence
+      tags: [Disputes]
+      summary: Export packet signature evidence pack
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            $ref: ./disputes.schemas.yaml#/components/schemas/DisputeId
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      responses:
+        '200':
+          description: Evidence export
+          content:
+            application/json:
+              schema:
+                $ref: ./disputes.schemas.yaml#/components/schemas/DisputeEvidenceExportResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/disputes/{disputeId}/resolve:
+    post:
+      operationId: resolveDispute
+      tags: [Disputes]
+      summary: Resolve or escalate a dispute
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            $ref: ./disputes.schemas.yaml#/components/schemas/DisputeId
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./disputes.schemas.yaml#/components/schemas/DisputeResolveRequest
+      responses:
+        '200':
+          description: Dispute updated
+          content:
+            application/json:
+              schema:
+                $ref: ./disputes.schemas.yaml#/components/schemas/DisputeResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

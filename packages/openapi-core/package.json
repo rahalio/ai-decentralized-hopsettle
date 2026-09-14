@@ -1,0 +1,20 @@
+{
+  "name": "@hopsettle/openapi-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenAPI contracts for Hopsettle (common + identity + product domains)",
+  "scripts": {
+    "lint:domains": "redocly lint",
+    "bundle:domains": "mkdir -p src/.bundled && pnpm run bundle:yaml && pnpm run bundle:json",
+    "bundle:yaml": "redocly bundle identity --output src/.bundled/identity.openapi.yaml && redocly bundle channels --output src/.bundled/channels.openapi.yaml && redocly bundle accounting --output src/.bundled/accounting.openapi.yaml && redocly bundle pricing --output src/.bundled/pricing.openapi.yaml && redocly bundle staking --output src/.bundled/staking.openapi.yaml && redocly bundle settlement --output src/.bundled/settlement.openapi.yaml && redocly bundle reporting --output src/.bundled/reporting.openapi.yaml && redocly bundle disputes --output src/.bundled/disputes.openapi.yaml && redocly bundle topology --output src/.bundled/topology.openapi.yaml",
+    "bundle:json": "redocly bundle identity --output src/.bundled/identity.json && redocly bundle channels --output src/.bundled/channels.json && redocly bundle accounting --output src/.bundled/accounting.json && redocly bundle pricing --output src/.bundled/pricing.json && redocly bundle staking --output src/.bundled/staking.json && redocly bundle settlement --output src/.bundled/settlement.json && redocly bundle reporting --output src/.bundled/reporting.json && redocly bundle disputes --output src/.bundled/disputes.json && redocly bundle topology --output src/.bundled/topology.json",
+    "lint": "pnpm run lint:domains",
+    "bundle": "pnpm run bundle:domains"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.34.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,124 @@
+openapi: 3.1.0
+info:
+  title: Disputes schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    DisputeId:
+      type: string
+      pattern: '^dsp_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    DisputeStatus:
+      type: string
+      enum: [open, evidence_submitted, resolved, escalated_quarantine, expired]
+
+    Dispute:
+      type: object
+      required: [disputeId, channelId, status, claimantRole, createdAt, updatedAt]
+      properties:
+        disputeId:
+          $ref: '#/components/schemas/DisputeId'
+        channelId: { type: string }
+        accountingEntryId: { type: string }
+        status:
+          $ref: '#/components/schemas/DisputeStatus'
+        claimantRole:
+          type: string
+          enum: [buyer, seller, superpeer]
+        claimedBytes:
+          type: integer
+        accountedBytes:
+          type: integer
+        resolutionNote:
+          type: string
+        evidenceExportUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DisputeCreateRequest:
+      type: object
+      required: [channelId, claimantRole]
+      properties:
+        channelId: { type: string }
+        accountingEntryId: { type: string }
+        claimantRole:
+          type: string
+          enum: [buyer, seller, superpeer]
+        claimedBytes:
+          type: integer
+        note:
+          type: string
+          maxLength: 2000
+
+    DisputeResolveRequest:
+      type: object
+      required: [resolutionNote]
+      properties:
+        resolutionNote:
+          type: string
+          maxLength: 2000
+        escalateQuarantine:
+          type: boolean
+          default: false
+
+    DisputeListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dispute'
+        nextCursor: { type: string }
+
+    DisputeResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Dispute'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    DisputeListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/DisputeListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    DisputeEvidenceExport:
+      type: object
+      required: [disputeId, signatureSlice, exportedAt]
+      properties:
+        disputeId:
+          $ref: '#/components/schemas/DisputeId'
+        signatureSlice:
+          type: array
+          items:
+            type: object
+            properties:
+              packetId: { type: string }
+              bpsSignature: { type: string }
+              chsSignature: { type: string }
+              bytes: { type: integer }
+        exportedAt:
+          type: string
+          format: date-time
+
+    DisputeEvidenceExportResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/DisputeEvidenceExport'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

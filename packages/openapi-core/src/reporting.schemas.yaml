@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: Reporting schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    ChannelReconciliationReport:
+      type: object
+      required: [superpeerId, accountingMismatchRate, openChannels, generatedAt]
+      properties:
+        superpeerId: { type: string }
+        meshAttachmentId: { type: string }
+        accountingMismatchRate:
+          type: number
+          format: float
+        openChannels:
+          type: integer
+        divergedEntries:
+          type: integer
+        packetsSettled:
+          type: integer
+        packetsTransmitted:
+          type: integer
+        generatedAt:
+          type: string
+          format: date-time
+
+    RelayAttributionRow:
+      type: object
+      required: [relayMeshId, channelId, forwardedBytes]
+      properties:
+        relayMeshId: { type: string }
+        channelId: { type: string }
+        forwardedBytes:
+          type: integer
+        estimatedRmesh:
+          type: number
+          format: double
+        compensationEnabled:
+          type: boolean
+
+    RelayAttributionReport:
+      type: object
+      required: [items, compensationEnabled]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelayAttributionRow'
+        compensationEnabled:
+          type: boolean
+        meshAttachmentId: { type: string }
+
+    ChannelReconciliationReportResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ChannelReconciliationReport'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    RelayAttributionReportResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/RelayAttributionReport'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

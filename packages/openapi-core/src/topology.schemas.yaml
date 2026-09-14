@@ -1,0 +1,150 @@
+openapi: 3.1.0
+info:
+  title: Topology schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    MeshAttachmentId:
+      type: string
+      pattern: '^mat_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    MeshRole:
+      type: string
+      enum: [MASTER, CLIENT, ROUTER, GATEWAY, SUPERPEER, REMOTEPEER]
+
+    GatewayHealth:
+      type: string
+      enum: [healthy, degraded, hole_punch_failed, blocked]
+
+    QuarantineStatus:
+      type: string
+      enum: [clear, quarantined]
+
+    MeshAttachment:
+      type: object
+      required: [attachmentId, label, gatewayHealth, updatedAt]
+      properties:
+        attachmentId:
+          $ref: '#/components/schemas/MeshAttachmentId'
+        label: { type: string }
+        geographyHint: { type: string }
+        linkedAttachmentId: { type: string }
+        gatewayHealth:
+          $ref: '#/components/schemas/GatewayHealth'
+        superpeerKind:
+          type: string
+          enum: [token, app]
+        updatedAt:
+          type: string
+          format: date-time
+
+    TopologyNode:
+      type: object
+      required: [meshId, role]
+      properties:
+        meshId: { type: string }
+        role:
+          $ref: '#/components/schemas/MeshRole'
+        attachmentId:
+          $ref: '#/components/schemas/MeshAttachmentId'
+        superpeerKind:
+          type: string
+          enum: [token, app]
+        quarantineStatus:
+          $ref: '#/components/schemas/QuarantineStatus'
+
+    TopologySnapshot:
+      type: object
+      required: [nodes, attachments, capturedAt]
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyNode'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeshAttachment'
+        capturedAt:
+          type: string
+          format: date-time
+        ageSeconds:
+          type: integer
+
+    QuarantineRecord:
+      type: object
+      required: [meshId, status, reason, updatedAt]
+      properties:
+        meshId: { type: string }
+        status:
+          $ref: '#/components/schemas/QuarantineStatus'
+        reason: { type: string }
+        mismatchRate:
+          type: number
+          format: float
+        updatedAt:
+          type: string
+          format: date-time
+
+    QuarantineActionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
+
+    MeshAttachmentListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeshAttachment'
+
+    MeshAttachmentListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/MeshAttachmentListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    TopologySnapshotResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/TopologySnapshot'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    QuarantineListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuarantineRecord'
+
+    QuarantineListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/QuarantineListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    QuarantineRecordResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/QuarantineRecord'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

@@ -1,0 +1,127 @@
+openapi: 3.1.0
+info:
+  title: Staking API
+  version: 0.1.0
+  description: |
+    Token superpeer RMESH float eligibility and depletion alerts (BR-4, BR-7).
+  license:
+    name: Proprietary
+    url: https://hopsettle.local/license
+  x-domain: stk
+servers:
+  - url: https://api.hopsettle.local
+security:
+  - apiKey: []
+tags:
+  - name: Staking
+    description: Float and staking eligibility
+paths:
+  /v1/staking/accounts/{meshId}:
+    get:
+      operationId: getStakingAccount
+      tags: [Staking]
+      summary: Get staking float and eligibility for a MeshID
+      parameters:
+        - name: meshId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Staking account
+          content:
+            application/json:
+              schema:
+                $ref: ./staking.schemas.yaml#/components/schemas/StakingAccountResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/staking/accounts/{meshId}/top-up:
+    post:
+      operationId: recordStakingTopUp
+      tags: [Staking]
+      summary: Record a float top-up
+      parameters:
+        - name: meshId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./staking.schemas.yaml#/components/schemas/TopUpRequest
+      responses:
+        '200':
+          description: Updated staking account
+          content:
+            application/json:
+              schema:
+                $ref: ./staking.schemas.yaml#/components/schemas/StakingAccountResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/staking/accounts/{meshId}/pause-offers:
+    post:
+      operationId: pauseNewChannelOffers
+      tags: [Staking]
+      summary: Manually pause or resume new channel offers
+      parameters:
+        - name: meshId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./staking.schemas.yaml#/components/schemas/PauseOffersRequest
+      responses:
+        '200':
+          description: Updated staking account
+          content:
+            application/json:
+              schema:
+                $ref: ./staking.schemas.yaml#/components/schemas/StakingAccountResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/staking/accounts/{meshId}/alerts:
+    get:
+      operationId: listFloatAlerts
+      tags: [Staking]
+      summary: List float depletion alerts
+      parameters:
+        - name: meshId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                $ref: ./staking.schemas.yaml#/components/schemas/FloatAlertListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

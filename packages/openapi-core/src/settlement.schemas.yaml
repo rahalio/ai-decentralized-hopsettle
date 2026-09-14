@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info:
+  title: Settlement schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    SettlementStatementId:
+      type: string
+      pattern: '^stl_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    SettlementLineKind:
+      type: string
+      enum: [open, account, close, adjustment]
+
+    SettlementLineItem:
+      type: object
+      required: [kind, channelId, rmesh]
+      properties:
+        kind:
+          $ref: '#/components/schemas/SettlementLineKind'
+        channelId: { type: string }
+        rmesh:
+          type: number
+          format: double
+        eth:
+          type: number
+          format: double
+        occurredAt:
+          type: string
+          format: date-time
+
+    SettlementStatement:
+      type: object
+      required: [statementId, period, netRmesh, channelsClosed, createdAt]
+      properties:
+        statementId:
+          $ref: '#/components/schemas/SettlementStatementId'
+        period: { type: string }
+        meshAttachmentId: { type: string }
+        netRmesh:
+          type: number
+          format: double
+        netEth:
+          type: number
+          format: double
+        channelsClosed:
+          type: integer
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/SettlementLineItem'
+        exported:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    SettlementStatementListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SettlementStatement'
+        nextCursor: { type: string }
+
+    SettlementStatementResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/SettlementStatement'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    SettlementStatementListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/SettlementStatementListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

@@ -1,0 +1,105 @@
+openapi: 3.1.0
+info:
+  title: Staking schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    StakingAccountId:
+      type: string
+      pattern: '^stk_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    FloatAlertSeverity:
+      type: string
+      enum: [info, warning, critical]
+
+    StakingAccount:
+      type: object
+      required: [accountId, meshId, rmeshFloat, minimumFloat, eligibleForNewChannels, updatedAt]
+      properties:
+        accountId:
+          $ref: '#/components/schemas/StakingAccountId'
+        meshId:
+          type: string
+        rmeshFloat:
+          type: number
+          format: double
+        ethGasHeadroom:
+          type: number
+          format: double
+        minimumFloat:
+          type: number
+          format: double
+        eligibleForNewChannels:
+          type: boolean
+        projectedRunwayHours:
+          type: number
+          format: double
+        offersPaused:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+
+    FloatAlert:
+      type: object
+      required: [alertId, meshId, severity, message, createdAt]
+      properties:
+        alertId: { type: string }
+        meshId: { type: string }
+        severity:
+          $ref: '#/components/schemas/FloatAlertSeverity'
+        message: { type: string }
+        acknowledged:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    TopUpRequest:
+      type: object
+      required: [amountRmesh]
+      properties:
+        amountRmesh:
+          type: number
+          format: double
+          minimum: 0
+        note:
+          type: string
+          maxLength: 500
+
+    PauseOffersRequest:
+      type: object
+      properties:
+        paused:
+          type: boolean
+          default: true
+        reason:
+          type: string
+
+    StakingAccountResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/StakingAccount'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    FloatAlertListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FloatAlert'
+
+    FloatAlertListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/FloatAlertListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

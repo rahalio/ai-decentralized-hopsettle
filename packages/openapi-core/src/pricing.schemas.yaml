@@ -1,0 +1,151 @@
+openapi: 3.1.0
+info:
+  title: Pricing schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    PricingPolicyId:
+      type: string
+      pattern: '^prc_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    PricingRole:
+      type: string
+      enum: [seller, superpeer, app_superpeer]
+
+    PricingUnit:
+      type: string
+      enum: [per_mb, per_packet]
+
+    PricingPolicyStatus:
+      type: string
+      enum: [draft, active, scheduled, archived]
+
+    PricingPolicy:
+      type: object
+      required: [policyId, role, unit, pricePerUnit, status, createdAt, updatedAt]
+      properties:
+        policyId:
+          $ref: '#/components/schemas/PricingPolicyId'
+        role:
+          $ref: '#/components/schemas/PricingRole'
+        unit:
+          $ref: '#/components/schemas/PricingUnit'
+        pricePerUnit:
+          type: number
+          format: double
+          minimum: 0
+        superpeerMarkupPercent:
+          type: number
+          format: float
+          minimum: 0
+        relaySharePercent:
+          type: number
+          format: float
+          minimum: 0
+        meshAttachmentId:
+          type: string
+        status:
+          $ref: '#/components/schemas/PricingPolicyStatus'
+        effectiveAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PricingPolicyCreate:
+      type: object
+      required: [role, unit, pricePerUnit]
+      properties:
+        role:
+          $ref: '#/components/schemas/PricingRole'
+        unit:
+          $ref: '#/components/schemas/PricingUnit'
+        pricePerUnit:
+          type: number
+          format: double
+          minimum: 0
+        superpeerMarkupPercent:
+          type: number
+          format: float
+          minimum: 0
+        relaySharePercent:
+          type: number
+          format: float
+          minimum: 0
+        meshAttachmentId:
+          type: string
+        effectiveAt:
+          type: string
+          format: date-time
+
+    PathChargePreview:
+      type: object
+      required: [hops, totalRmesh]
+      properties:
+        hops:
+          type: array
+          items:
+            type: object
+            required: [label, rmesh]
+            properties:
+              label: { type: string }
+              rmesh: { type: number, format: double }
+        totalRmesh:
+          type: number
+          format: double
+        sampleBytes:
+          type: integer
+
+    PathChargePreviewRequest:
+      type: object
+      required: [bytes]
+      properties:
+        bytes:
+          type: integer
+          minimum: 1
+        policyId:
+          $ref: '#/components/schemas/PricingPolicyId'
+        meshAttachmentId:
+          type: string
+
+    PricingPolicyListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricingPolicy'
+        nextCursor: { type: string }
+
+    PricingPolicyResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PricingPolicy'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    PricingPolicyListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PricingPolicyListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    PathChargePreviewResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PathChargePreview'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

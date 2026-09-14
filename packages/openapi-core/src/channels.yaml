@@ -1,0 +1,172 @@
+openapi: 3.1.0
+info:
+  title: Channels API
+  version: 0.1.0
+  description: |
+    Payment channel discovery, open, monitor, and close for buyer/superpeer/seller/relay roles.
+    Mirrors GET_ALL discovery and contract-backed existence checks (BR-1, BR-5).
+  license:
+    name: Proprietary
+    url: https://hopsettle.local/license
+  x-domain: chn
+servers:
+  - url: https://api.hopsettle.local
+    description: Local / Hopsettle API
+security:
+  - apiKey: []
+tags:
+  - name: Channels
+    description: Payment channel lifecycle
+paths:
+  /v1/channels:
+    get:
+      operationId: listPaymentChannels
+      tags: [Channels]
+      summary: List payment channels
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: role
+          in: query
+          schema:
+            $ref: ./channels.schemas.yaml#/components/schemas/ChannelRole
+        - name: status
+          in: query
+          schema:
+            $ref: ./channels.schemas.yaml#/components/schemas/ChannelStatus
+        - name: meshAttachmentId
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Channels page
+          content:
+            application/json:
+              schema:
+                $ref: ./channels.schemas.yaml#/components/schemas/PaymentChannelListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: openPaymentChannel
+      tags: [Channels]
+      summary: Open a payment channel after discovery and float checks
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./channels.schemas.yaml#/components/schemas/ChannelOpenRequest
+      responses:
+        '201':
+          description: Channel open initiated
+          content:
+            application/json:
+              schema:
+                $ref: ./channels.schemas.yaml#/components/schemas/PaymentChannelResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '409':
+          $ref: ./common/responses.yaml#/components/responses/Conflict
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/channels/discovery:
+    post:
+      operationId: discoverPaymentChannels
+      tags: [Channels]
+      summary: Run GET_ALL-style channel discovery for a MeshID
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [meshId]
+              properties:
+                meshId:
+                  $ref: ./channels.schemas.yaml#/components/schemas/MeshId
+                counterpartyMeshId:
+                  $ref: ./channels.schemas.yaml#/components/schemas/MeshId
+      responses:
+        '200':
+          description: Discovery results
+          content:
+            application/json:
+              schema:
+                $ref: ./channels.schemas.yaml#/components/schemas/ChannelDiscoveryResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/channels/{channelId}:
+    get:
+      operationId: getPaymentChannel
+      tags: [Channels]
+      summary: Get channel state
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            $ref: ./channels.schemas.yaml#/components/schemas/ChannelId
+      responses:
+        '200':
+          description: Channel state
+          content:
+            application/json:
+              schema:
+                $ref: ./channels.schemas.yaml#/components/schemas/PaymentChannelResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/channels/{channelId}/close:
+    post:
+      operationId: closePaymentChannel
+      tags: [Channels]
+      summary: Close a payment channel (optionally force)
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            $ref: ./channels.schemas.yaml#/components/schemas/ChannelId
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./channels.schemas.yaml#/components/schemas/ChannelCloseRequest
+      responses:
+        '202':
+          description: Close accepted
+          content:
+            application/json:
+              schema:
+                $ref: ./channels.schemas.yaml#/components/schemas/PaymentChannelResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

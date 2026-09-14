@@ -1,0 +1,106 @@
+openapi: 3.1.0
+info:
+  title: Accounting API
+  version: 0.1.0
+  description: |
+    BPS/CHS packet-level data accounting and reconciliation within tolerance (BR-2, BR-6).
+  license:
+    name: Proprietary
+    url: https://hopsettle.local/license
+  x-domain: acct
+servers:
+  - url: https://api.hopsettle.local
+security:
+  - apiKey: []
+tags:
+  - name: Accounting
+    description: Packet accounting reconciliation
+paths:
+  /v1/accounting/entries:
+    get:
+      operationId: listAccountingEntries
+      tags: [Accounting]
+      summary: List packet accounting entries
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: channelId
+          in: query
+          schema: { type: string }
+        - name: reconcileStatus
+          in: query
+          schema:
+            $ref: ./accounting.schemas.yaml#/components/schemas/ReconcileStatus
+      responses:
+        '200':
+          description: Accounting entries
+          content:
+            application/json:
+              schema:
+                $ref: ./accounting.schemas.yaml#/components/schemas/PacketAccountingEntryListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: ingestAccountingEntry
+      tags: [Accounting]
+      summary: Ingest a BPS/CHS accounting entry from the mesh agent
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./accounting.schemas.yaml#/components/schemas/PacketAccountingEntryIngest
+      responses:
+        '201':
+          description: Entry ingested
+          content:
+            application/json:
+              schema:
+                $ref: ./accounting.schemas.yaml#/components/schemas/PacketAccountingEntryResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/accounting/entries/{entryId}/review:
+    post:
+      operationId: markAccountingEntryReviewed
+      tags: [Accounting]
+      summary: Mark a diverged entry as reviewed
+      parameters:
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            $ref: ./accounting.schemas.yaml#/components/schemas/AccountingEntryId
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./accounting.schemas.yaml#/components/schemas/MarkReviewedRequest
+      responses:
+        '200':
+          description: Entry updated
+          content:
+            application/json:
+              schema:
+                $ref: ./accounting.schemas.yaml#/components/schemas/PacketAccountingEntryResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

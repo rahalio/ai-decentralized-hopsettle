@@ -1,0 +1,136 @@
+openapi: 3.1.0
+info:
+  title: Topology API
+  version: 0.1.0
+  description: |
+    Mesh attachments, role topology, gateway health, and quarantine board (BR-8, BR-9, BR-11).
+  license:
+    name: Proprietary
+    url: https://hopsettle.local/license
+  x-domain: topo
+servers:
+  - url: https://api.hopsettle.local
+security:
+  - apiKey: []
+tags:
+  - name: Topology
+    description: Mesh topology and quarantine
+paths:
+  /v1/topology/attachments:
+    get:
+      operationId: listMeshAttachments
+      tags: [Topology]
+      summary: List mesh attachments (geographic links)
+      responses:
+        '200':
+          description: Attachments
+          content:
+            application/json:
+              schema:
+                $ref: ./topology.schemas.yaml#/components/schemas/MeshAttachmentListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/topology/snapshot:
+    get:
+      operationId: getTopologySnapshot
+      tags: [Topology]
+      summary: Role topology snapshot
+      parameters:
+        - name: attachmentId
+          in: query
+          schema:
+            $ref: ./topology.schemas.yaml#/components/schemas/MeshAttachmentId
+      responses:
+        '200':
+          description: Topology snapshot
+          content:
+            application/json:
+              schema:
+                $ref: ./topology.schemas.yaml#/components/schemas/TopologySnapshotResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/topology/quarantine:
+    get:
+      operationId: listQuarantineRecords
+      tags: [Topology]
+      summary: Platform quarantine board
+      responses:
+        '200':
+          description: Quarantine queue
+          content:
+            application/json:
+              schema:
+                $ref: ./topology.schemas.yaml#/components/schemas/QuarantineListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/topology/quarantine/{meshId}:
+    post:
+      operationId: quarantineMeshNode
+      tags: [Topology]
+      summary: Quarantine a MeshID
+      parameters:
+        - name: meshId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./topology.schemas.yaml#/components/schemas/QuarantineActionRequest
+      responses:
+        '200':
+          description: Quarantined
+          content:
+            application/json:
+              schema:
+                $ref: ./topology.schemas.yaml#/components/schemas/QuarantineRecordResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/topology/quarantine/{meshId}/release:
+    post:
+      operationId: releaseQuarantine
+      tags: [Topology]
+      summary: Release a MeshID from quarantine
+      parameters:
+        - name: meshId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./topology.schemas.yaml#/components/schemas/QuarantineActionRequest
+      responses:
+        '200':
+          description: Released
+          content:
+            application/json:
+              schema:
+                $ref: ./topology.schemas.yaml#/components/schemas/QuarantineRecordResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

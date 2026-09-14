@@ -1,0 +1,123 @@
+openapi: 3.1.0
+info:
+  title: Pricing API
+  version: 0.1.0
+  description: |
+    Seller rates and superpeer markup policies without breaking BPS/CHS semantics (BR-3, BR-8).
+  license:
+    name: Proprietary
+    url: https://hopsettle.local/license
+  x-domain: prc
+servers:
+  - url: https://api.hopsettle.local
+security:
+  - apiKey: []
+tags:
+  - name: Pricing
+    description: Seller rates and hub markup
+paths:
+  /v1/pricing/policies:
+    get:
+      operationId: listPricingPolicies
+      tags: [Pricing]
+      summary: List pricing policies
+      parameters:
+        - name: role
+          in: query
+          schema:
+            $ref: ./pricing.schemas.yaml#/components/schemas/PricingRole
+        - name: status
+          in: query
+          schema:
+            $ref: ./pricing.schemas.yaml#/components/schemas/PricingPolicyStatus
+      responses:
+        '200':
+          description: Pricing policies
+          content:
+            application/json:
+              schema:
+                $ref: ./pricing.schemas.yaml#/components/schemas/PricingPolicyListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createPricingPolicy
+      tags: [Pricing]
+      summary: Create or publish a pricing policy
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./pricing.schemas.yaml#/components/schemas/PricingPolicyCreate
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: ./pricing.schemas.yaml#/components/schemas/PricingPolicyResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/pricing/policies/{policyId}:
+    get:
+      operationId: getPricingPolicy
+      tags: [Pricing]
+      summary: Get a pricing policy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            $ref: ./pricing.schemas.yaml#/components/schemas/PricingPolicyId
+      responses:
+        '200':
+          description: Policy
+          content:
+            application/json:
+              schema:
+                $ref: ./pricing.schemas.yaml#/components/schemas/PricingPolicyResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/pricing/path-preview:
+    post:
+      operationId: previewPathCharges
+      tags: [Pricing]
+      summary: Simulate buyer-visible path charges
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./pricing.schemas.yaml#/components/schemas/PathChargePreviewRequest
+      responses:
+        '200':
+          description: Path charge preview
+          content:
+            application/json:
+              schema:
+                $ref: ./pricing.schemas.yaml#/components/schemas/PathChargePreviewResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

@@ -1,0 +1,108 @@
+openapi: 3.1.0
+info:
+  title: Accounting schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    AccountingEntryId:
+      type: string
+      pattern: '^ace_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    PacketType:
+      type: string
+      enum: [DATA, DATA_ACK]
+
+    ReconcileStatus:
+      type: string
+      enum: [pending, within_tolerance, diverged, reviewed, quarantined]
+
+    PacketAccountingEntry:
+      type: object
+      required: [entryId, channelId, packetType, bytes, bpsSignature, reconcileStatus, createdAt]
+      properties:
+        entryId:
+          $ref: '#/components/schemas/AccountingEntryId'
+        channelId:
+          type: string
+        packetId:
+          type: string
+        packetType:
+          $ref: '#/components/schemas/PacketType'
+        bytes:
+          type: integer
+          minimum: 0
+        bpsSignature:
+          type: string
+        chsSignature:
+          type: string
+        balanceDeltaRmesh:
+          type: number
+          format: double
+        reconcileStatus:
+          $ref: '#/components/schemas/ReconcileStatus'
+        toleranceBps:
+          type: number
+          format: double
+          description: Allowed divergence in basis points.
+        relayMeshId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PacketAccountingEntryIngest:
+      type: object
+      required: [channelId, packetType, bytes, bpsSignature]
+      properties:
+        channelId: { type: string }
+        packetId: { type: string }
+        packetType:
+          $ref: '#/components/schemas/PacketType'
+        bytes:
+          type: integer
+          minimum: 0
+        bpsSignature: { type: string }
+        chsSignature: { type: string }
+        balanceDeltaRmesh:
+          type: number
+          format: double
+        relayMeshId: { type: string }
+
+    MarkReviewedRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          maxLength: 1000
+
+    AccountingEntryListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PacketAccountingEntry'
+        nextCursor: { type: string }
+        mismatchRate:
+          type: number
+          format: float
+
+    PacketAccountingEntryResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PacketAccountingEntry'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    PacketAccountingEntryListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AccountingEntryListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

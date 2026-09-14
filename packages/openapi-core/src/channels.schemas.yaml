@@ -1,0 +1,161 @@
+openapi: 3.1.0
+info:
+  title: Channels schemas
+  version: 0.1.0
+  description: Payment channel lifecycle schemas for Hopsettle.
+paths: {}
+components:
+  schemas:
+    ChannelId:
+      type: string
+      pattern: '^chn_[0-9A-HJKMNP-TV-Z]{26}$'
+      description: Prefixed payment channel id.
+
+    MeshId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: RightMesh MeshID (Ethereum address form).
+
+    ChannelRole:
+      type: string
+      enum: [buyer, seller, superpeer, relay]
+
+    ChannelDirection:
+      type: string
+      enum: [buyer_to_superpeer, superpeer_to_seller, relay_path]
+
+    ChannelStatus:
+      type: string
+      enum: [discovered, opening, open, closing, closed, blocked]
+
+    SuperpeerKind:
+      type: string
+      enum: [token, app]
+
+    PaymentChannel:
+      type: object
+      required: [channelId, meshId, role, direction, status, rmeshBalance, ethBalance, createdAt, updatedAt]
+      properties:
+        channelId:
+          $ref: '#/components/schemas/ChannelId'
+        meshId:
+          $ref: '#/components/schemas/MeshId'
+        counterpartyMeshId:
+          $ref: '#/components/schemas/MeshId'
+        role:
+          $ref: '#/components/schemas/ChannelRole'
+        direction:
+          $ref: '#/components/schemas/ChannelDirection'
+        status:
+          $ref: '#/components/schemas/ChannelStatus'
+        superpeerKind:
+          $ref: '#/components/schemas/SuperpeerKind'
+        rmeshBalance:
+          type: number
+          format: double
+        ethBalance:
+          type: number
+          format: double
+        capacityRmesh:
+          type: number
+          format: double
+        meshAttachmentId:
+          type: string
+        contractExists:
+          type: boolean
+          description: Result of smart-contract channel existence check.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ChannelOpenRequest:
+      type: object
+      required: [meshId, role, direction, counterpartyMeshId]
+      properties:
+        meshId:
+          $ref: '#/components/schemas/MeshId'
+        role:
+          $ref: '#/components/schemas/ChannelRole'
+        direction:
+          $ref: '#/components/schemas/ChannelDirection'
+        counterpartyMeshId:
+          $ref: '#/components/schemas/MeshId'
+        depositRmesh:
+          type: number
+          format: double
+          minimum: 0
+        superpeerKind:
+          $ref: '#/components/schemas/SuperpeerKind'
+        meshAttachmentId:
+          type: string
+
+    ChannelCloseRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+        force:
+          type: boolean
+          default: false
+
+    ChannelDiscoveryResult:
+      type: object
+      required: [meshId, existingChannels, rmeshBalance, ethBalance]
+      properties:
+        meshId:
+          $ref: '#/components/schemas/MeshId'
+        existingChannels:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentChannel'
+        rmeshBalance:
+          type: number
+          format: double
+        ethBalance:
+          type: number
+          format: double
+        floatEligible:
+          type: boolean
+
+    ChannelListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentChannel'
+        nextCursor:
+          type: string
+
+    PaymentChannelResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PaymentChannel'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    PaymentChannelListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ChannelListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    ChannelDiscoveryResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ChannelDiscoveryResult'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
